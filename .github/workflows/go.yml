@@ -103,5 +103,5 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./cfipbot-${{matrix.goos}}-${{matrix.goarch}}.zip*
-          tag:  ${{ github.sha }} 
+          tag: ${{ github.ref }}
           file_glob: true

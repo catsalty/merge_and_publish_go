@@ -279,8 +279,8 @@ func startServer(wg *sync.WaitGroup, fileDir string) {
 
 	http.HandleFunc("/valid", handleValid)
 
-	fmt.Println("Server is running on http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server is running on http://localhost:32800")
+	http.ListenAndServe(":32800", nil)
 }
 
 func handleValid(w http.ResponseWriter, r *http.Request) {

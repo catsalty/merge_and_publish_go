@@ -111,7 +111,7 @@ jobs:
           check-latest: true
 
       - name: Get project dependencies
-        run: go mod download
+        run: go mod download && go mod tidy
  
       - name: Build cfipbot
         run: |

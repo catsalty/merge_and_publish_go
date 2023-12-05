@@ -134,9 +134,9 @@ jobs:
         run: |
           pushd build_assets || exit 1
           touch -mt $(date +%Y01010000) *
-          zip -9vr ../cfipbot-${{ env.ASSET_NAME }}.zip .
+          zip -9vr ../cfipbot-${{env.GOOS}}-${{evn.GOARCH}}.zip .
           popd || exit 1
-          FILE=./cfipbot-${{ env.ASSET_NAME }}.zip
+          FILE=./cfipbot-${{env.GOOS}}-${{evn.GOARCH}}.zip
           DGST=$FILE.dgst
           for METHOD in {"md5","sha1","sha256","sha512"}
           do
@@ -145,19 +145,19 @@ jobs:
 
       - name: Change the name
         run: |
-          mv build_assets cfipbot-${{ env.ASSET_NAME }}
+          mv build_assets cfipbot-${{env.GOOS}}-${{evn.GOARCH}}
 
       - name: Upload files to Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: cfipbot-${{ env.ASSET_NAME }}
+          name: cfipbot-${{env.GOOS}}-${{evn.GOARCH}}
           path: |
-            ./cfipbot-${{ env.ASSET_NAME }}/*
+            ./cfipbot-${{env.GOOS}}-${{evn.GOARCH}}/*
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./cfipbot-${{ env.ASSET_NAME }}.zip*
+          file: ./cfipbot-${{env.GOOS}}-${{evn.GOARCH}}.zip*
           tag: ${{ github.ref }}
           file_glob: true

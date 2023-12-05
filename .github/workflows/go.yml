@@ -2,8 +2,6 @@ name: Build and Release
 
 on:
   push:
-    tags:
-      - '*'
 
 jobs:
   build:
@@ -118,7 +116,7 @@ jobs:
       - name: Build cfipbot
         run: |
           mkdir -p build_assets
-          go build -v -o build_assets/cfipbot -trimpath -ldflags "-s -w -buildid=" ./main
+          go build -v -o build_assets/cfipbot ./
 
       - name: Build background cfipbot on Windows 
         if: matrix.goos == 'windows'

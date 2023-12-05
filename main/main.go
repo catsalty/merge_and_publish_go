@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -274,6 +273,7 @@ func startServer(wg *sync.WaitGroup, fileDir string, port int) {
 			http.Error(w, "Failed to read all.txt", http.StatusInternalServerError)
 			return
 		}
+		w.Write(content)
 	})
 
 	http.HandleFunc("/valid", handleValid)

@@ -94,24 +94,40 @@ func mergeTxtFiles(dir string) {
 }
 
 func main() {
-	fileDir := "./files"
+	fileDir := os.Getenv("TG_FILES_DIR")
+	TG_TOKEN := os.Getenv("TG_BOT_TOKEN")
+	var CHAT_ID int64
+	var err error
+	if fileDir == "" || TG_TOKEN == "" {
+		// 如果环境变量未设置，则从命令行参数中获取参数值
+		if len(os.Args) < 4 {
+			panic("not enough command-line arguments")
+		}
+		fileDir = os.Args[1]
+		TG_TOKEN = os.Args[2]
+		CHAT_ID, err = strconv.ParseInt(os.Args[3], 10, 64)
+		if err != nil {
+			panic("error on parsing CHAT_ID argument")
+		}
+	} else {
+		CHAT_ID, err = strconv.ParseInt(os.Getenv("TG_CHAT_ID"), 10, 64)
+		if err != nil {
+			panic("error on parsing TG_CHAT_ID environment variable")
+		}
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go startTgBot(&wg, fileDir)
+	go startTgBot(&wg, fileDir, TG_TOKEN, CHAT_ID)
 	go startServer(&wg, fileDir)
 	wg.Wait()
 }
 
 //tg bot
 
-func startTgBot(wg *sync.WaitGroup, fileSaveDir string) {
+func startTgBot(wg *sync.WaitGroup, fileSaveDir string, TG_TOKEN string, CHAT_ID int64) {
 	defer wg.Done()
 	// 替换为你自己的Telegram Bot Token
-	var TG_TOKEN = os.Getenv("TG_BOT_TOKEN")
-	CHAT_ID, err := strconv.ParseInt(os.Getenv("TG_CHAT_ID"), 10, 64)
-	if err != nil {
-		panic("error on get TG_CHAT_ID or TG_BOT_TOKEN")
-	}
 	bot, err := tgbotapi.NewBotAPI(TG_TOKEN)
 	if err != nil {
 		log.Fatal(err)

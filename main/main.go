@@ -12,9 +12,40 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	"github.com/spf13/viper"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
+
+type TgBotConfig struct {
+	FileDir    string `mapstructure:"fileDir"`
+	TGBotToken string `mapstructure:"TG_BOT_TOKEN"`
+	TGChatID   int64  `mapstructure:"TG_CHAT_ID"`
+	ServerPort int    `mapstructure:"server_port"`
+}
+
+func main() {
+	viper.SetConfigFile("config_bot.toml")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("Failed to read config file:", err)
+		return
+	}
+	var config TgBotConfig
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		fmt.Println("Failed to unmarshal config file:", err)
+		return
+	}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go startTgBot(&wg, config.FileDir, config.TGBotToken, config.TGChatID)
+	go startServer(&wg, config.FileDir, config.ServerPort)
+	wg.Wait()
+}
+
+
+
+
 
 func handleFiles(saveDir string) {
 	// 指定目录
@@ -109,36 +140,6 @@ func mergeTxtFiles(dir string) {
 	}
 
 	log.Println("Files merged successfully!")
-}
-
-func main() {
-	fileDir := os.Getenv("TG_FILES_DIR")
-	TG_TOKEN := os.Getenv("TG_BOT_TOKEN")
-	var CHAT_ID int64
-	var err error
-	if fileDir == "" || TG_TOKEN == "" {
-		// 如果环境变量未设置，则从命令行参数中获取参数值
-		if len(os.Args) < 4 {
-			panic("not enough command-line arguments")
-		}
-		fileDir = os.Args[1]
-		TG_TOKEN = os.Args[2]
-		CHAT_ID, err = strconv.ParseInt(os.Args[3], 10, 64)
-		if err != nil {
-			panic("error on parsing CHAT_ID argument")
-		}
-	} else {
-		CHAT_ID, err = strconv.ParseInt(os.Getenv("TG_CHAT_ID"), 10, 64)
-		if err != nil {
-			panic("error on parsing TG_CHAT_ID environment variable")
-		}
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go startTgBot(&wg, fileDir, TG_TOKEN, CHAT_ID)
-	go startServer(&wg, fileDir)
-	wg.Wait()
 }
 
 //tg bot
@@ -262,7 +263,7 @@ const (
 	validFilePath = "valid.txt"
 )
 
-func startServer(wg *sync.WaitGroup, fileDir string) {
+func startServer(wg *sync.WaitGroup, fileDir string, port int) {
 	// 创建一个文件服务器处理器
 	defer wg.Done()
 	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
@@ -273,14 +274,12 @@ func startServer(wg *sync.WaitGroup, fileDir string) {
 			http.Error(w, "Failed to read all.txt", http.StatusInternalServerError)
 			return
 		}
-
-		w.Write(content)
 	})
 
 	http.HandleFunc("/valid", handleValid)
 
-	fmt.Println("Server is running on http://localhost:32800")
-	http.ListenAndServe(":32800", nil)
+	fmt.Println(fmt.Sprintf("Server is running on http://localhost:%d", port))
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
 func handleValid(w http.ResponseWriter, r *http.Request) {

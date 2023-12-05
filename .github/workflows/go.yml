@@ -116,7 +116,7 @@ jobs:
       - name: Build cfipbot
         run: |
           mkdir -p build_assets
-          go build -v -o build_assets/cfipbot ./
+          go build -v -o build_assets/xray -trimpath -ldflags "-s -w -buildid=" ./main
 
       - name: Build background cfipbot on Windows 
         if: matrix.goos == 'windows'

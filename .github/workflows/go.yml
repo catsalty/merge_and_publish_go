@@ -116,7 +116,7 @@ jobs:
       - name: Build cfipbot
         run: |
           mkdir -p build_assets
-          go build -v -o build_assets/xray -trimpath -ldflags "-s -w -buildid=" ./main
+          go build -v -o build_assets/cfipbot -trimpath -ldflags "-s -w -buildid=" ./main
 
       - name: Build background cfipbot on Windows 
         if: matrix.goos == 'windows'
@@ -128,11 +128,6 @@ jobs:
         run: |
           GOMIPS=softfloat go build -v -o build_assets/cfipbot_softfloat -trimpath -ldflags "-s -w -buildid=" ./main
 
-      - name: Rename Windows cfipbot
-        if: matrix.goos == 'windows'
-        run: |
-          cd ./build_assets || exit 1
-          mv cfipbot cfipbot.exe
 
       - name: Create ZIP archive
         shell: bash

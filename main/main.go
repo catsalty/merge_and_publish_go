@@ -25,6 +25,24 @@ func handleFiles(saveDir string) {
 	log.Println("Files processed successfully!")
 }
 
+func deleteFiles(dirPath string) (int, error) {
+	count := 0
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			err := os.Remove(path)
+			if err == nil {
+				count++
+			}
+		}
+		return nil
+	})
+	return count, err
+}
+
 // 删除创建时间在4小时之前的文件
 func deleteOldFiles(dir string) {
 	files, err := ioutil.ReadDir(dir)
@@ -174,6 +192,20 @@ func startTgBot(wg *sync.WaitGroup, fileSaveDir string, TG_TOKEN string, CHAT_ID
 					}
 				}
 			}
+			if update.Message.IsCommand() && update.Message.Command() == "clear" {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+				msg.ReplyToMessageID = update.Message.MessageID
+				count, err := deleteFiles(fileSaveDir)
+				if err != nil {
+					msg.Text = "删除文件时发生错误"
+				} else {
+					msg.Text = fmt.Sprintf("已完成删除 %d 个文件", count)
+				}
+				_, err = bot.Send(msg)
+				if err != nil {
+					log.Println(err)
+				}
+			}
 		}
 	}
 }
@@ -233,20 +265,22 @@ const (
 func startServer(wg *sync.WaitGroup, fileDir string) {
 	// 创建一个文件服务器处理器
 	defer wg.Done()
-	http.HandleFunc("/all", handleAll)
+	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+		// 读取指定目录下的文件
+		filePath := filepath.Join(fileDir, "all.txt")
+		content, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			http.Error(w, "Failed to read all.txt", http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(content)
+	})
+
 	http.HandleFunc("/valid", handleValid)
 
 	fmt.Println("Server is running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
-}
-func handleAll(w http.ResponseWriter, r *http.Request) {
-	content, err := ioutil.ReadFile(allFilePath)
-	if err != nil {
-		http.Error(w, "Failed to read all.txt", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(content)
 }
 
 func handleValid(w http.ResponseWriter, r *http.Request) {
